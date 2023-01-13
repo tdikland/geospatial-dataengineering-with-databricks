@@ -10,10 +10,10 @@
 # MAGIC 
 # MAGIC By the end of this notebook, you should be able to:
 # MAGIC - Explain how geospatial features on the Earth's surface are encoded in the vector format
-# MAGIC - Read WKT, WKB and GeoJson as geometries
+# MAGIC - Read WKT, WKB and GeoJSON as geometries
 # MAGIC - Read longitude/latitude pairs as geometries
-# MAGIC - Convert between WKT, WKB and GeoJson
-# MAGIC - Write WKT, WKB and GeoJson
+# MAGIC - Convert between WKT, WKB and GeoJSON
+# MAGIC - Write WKT, WKB and GeoJSON
 
 # COMMAND ----------
 
@@ -23,7 +23,7 @@
 
 # COMMAND ----------
 
-# TODO: Run setup script
+# MAGIC %run ../Includes/Setup-1
 
 # COMMAND ----------
 
@@ -54,8 +54,51 @@
 # MAGIC 
 # MAGIC _Geospatial features in vector format_
 # MAGIC 
-# MAGIC We have now fully encoded the image using a vector format. In this case we have a polygon defined by the coordinates `TODO`, a line defined by the coordinates `TODO` and a point defined by the coordinate `TODO`.
+# MAGIC We have now fully encoded the image using a vector format. In this case we have a polygon defined by the coordinates `(2, 4), (2, 8), (6, 8) and (6, 4)`, a line defined by the coordinates `(1, 0) and (1, 10)` and a point defined by the coordinate `(8, 6)`.
 
 # COMMAND ----------
 
-Vector data is what most people think of when they consider spatial data.  Data in this format consists of points, lines or polygons.  At its simplest level, vector data comprises of individual points stored as coordinate pairs that indicate a physical location in the world.  These points can be joined, in a particular order, to form lines or joined into closed areas to form polygons. Vector data is extremely useful for storing and representing data that has discrete boundaries, such as borders or building footprints, streets and other transport links, and location points.  Ubiquitous online mapping portals, such as Google Maps and Open Street Maps, present data in this format.
+# MAGIC %md 
+# MAGIC ## WKT (well-known text representation of geometry)
+# MAGIC 
+# MAGIC Now that we've seen how vector data is constructed from spatial features, we'll have to talk about the data formats to interpret, transfer and store these vectors. Starting off with WKT is easy, because this format is the easiest for humans to interpret and is essentially a markup language for geospatial vectors. This makes it often the format of choice when creating small example geometries. An elaborate explaination of the format can be found on [wikipedia](https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry). Let's load our geometries in Spark using Mosaic.
+
+# COMMAND ----------
+
+# Represent the vector data in the WKT format
+point_wkt = "POINT (8 6)"
+line_wkt = "LINESTRING (1 0, 1 10)"
+polygon_wkt = "POLYGON ((2 4, 2 8, 6 8, 6 4, 2 4))"
+
+df = spark.createDataFrame([("point", point_wkt), ("line", line_wkt), ("polygon", polygon_wkt)], "type STRING, geom_wkt STRING")
+
+# Use the ST_GEOMFROMWKT function to convert into a internal geometry type for processing
+df = df.withColumn("geom", mos.st_geomfromwkt(F.col("geom_wkt")))
+
+display(df)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ### TODO: Write somethnig about holes in polygons + multi- geometries + etc.
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## WKB (well-known binary representation of geometry)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## GeoJSON
+# MAGIC 
+# MAGIC files ending in .geojson (or sometimes just .json extension)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Writing as ...
+
+# COMMAND ----------
+
+
