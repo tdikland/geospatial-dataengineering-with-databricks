@@ -80,25 +80,69 @@ display(df)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### TODO: Write somethnig about holes in polygons + multi- geometries + etc.
+# MAGIC ## WKB (well-known binary representation of geometry)
+# MAGIC 
+# MAGIC The WKT format does a good job of being interpretable by humans. In contrast, the WKB is created for machine interpretability. It is also a more compressed than WKT and therefore an excellent format for storing and transfering geoemtries.
 
 # COMMAND ----------
 
-# MAGIC %md
-# MAGIC ## WKB (well-known binary representation of geometry)
+# Represent vector data in WKB format
+point_wkb = bytearray(b'\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00 @\x00\x00\x00\x00\x00\x00\x18@')
+line_wkb = bytearray(b'\x01\x02\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00$@')
+polygon_wkb = bytearray(b'\x01\x03\x00\x00\x00\x01\x00\x00\x00\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00 @\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x18@\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x18@\x00\x00\x00\x00\x00\x00 @\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00 @')
+
+df = spark.createDataFrame([("point", point_wkb), ("line", line_wkb), ("polygon", polygon_wkb)], "type STRING, geom_wkb BINARY")
+
+# use ST_GEOMFROMWKB to convert into Mosaic's internal geometry format
+df = df.withColumn("geom", mos.st_geomfromwkb(F.col("geom_wkb")))
+
+# Compare the `geom` column with the cell above. Are the geometries the same?
+display(df)
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC ## GeoJSON
 # MAGIC 
-# MAGIC files ending in .geojson (or sometimes just .json extension)
+# MAGIC The GeoJSON is commonly used in web settings. The JSON format is already prevalent for sharing data between clients and servers. The GeoJSON is build upon the JSON standard. When stored the file extension is .geojson (or sometimes just .json extension). A more complete explanation can be found on [wikipedia](https://en.wikipedia.org/wiki/GeoJSON) or the [official standard](https://www.rfc-editor.org/rfc/rfc7946)
+
+# COMMAND ----------
+
+# Vector data in geojson format
+point_geojson = '{"type": "Point", "coordinates": [6, 8]}'
+line_geojson = '{"type": "LineString", "coordinates": [[1, 0], [1, 10]]}'
+polygon_geojson = '{"type": "Polygon", "coordinates": [[[2, 4], [2, 8], [6, 8], [6, 4], [2, 4]]]}'
+
+df = spark.createDataFrame([("point", point_geojson), ("line", line_geojson), ("polygon", polygon_geojson)], "type STRING, geom_geojson STRING")
+
+# use ST_GEOMFROMGEOJSON to convert into Mosaic's internal geometry format
+df = df.withColumn("geom", mos.st_geomfromgeojson(F.col("geom_geojson")))
+
+# Compare the `geom` column with the cell above. Are the geometries the same?
+display(df)
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Writing as ...
+# MAGIC ## Exporting geometries
+# MAGIC 
+# MAGIC Once we are done with processing geometries in the Mosaic's internal format, we can decide to write them back into one of the mentioned data formats. The [geometry accessors](https://databrickslabs.github.io/mosaic/api/geometry-accessors.html) can be used for this task.
 
 # COMMAND ----------
 
+# Setup a DataFrame containing some geometries
+point_wkt = "POINT (8 6)"
+line_wkt = "LINESTRING (1 0, 1 10)"
+polygon_wkt = "POLYGON ((2 4, 2 8, 6 8, 6 4, 2 4))"
 
+df = spark.createDataFrame([("point", point_wkt), ("line", line_wkt), ("polygon", polygon_wkt)], "type STRING, geom_wkt STRING").withColumn("geom", mos.st_geomfromwkt(F.col("geom_wkt"))).select("geom")
+
+# Convert into the required format
+final_df = (
+    df
+    .withColumn("wkt", mos.st_aswkt(F.col("geom")))
+    .withColumn("wkb", mos.st_aswkb(F.col("geom")))
+    .withColumn("geojson", mos.st_asgeojson(F.col("geom")))
+)
+
+display(final_df)
