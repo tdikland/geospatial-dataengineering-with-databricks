@@ -19,7 +19,7 @@
 
 # MAGIC %md
 # MAGIC ## Setup
-# MAGIC Run the setup script. This will import some needed modules and install the mosaic library. The mosaic library and its installation will be explained in depth in module (TODO)
+# MAGIC Run the setup script. This will import some needed modules and install the mosaic library. The mosaic library and its installation will be explained in depth in module 2.1
 
 # COMMAND ----------
 
