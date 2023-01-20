@@ -120,14 +120,14 @@ df_geom = (df
 )
 
 # apply the functions to the square geometry
-df_attrs = (df_geom
+df_predicates = (df_geom
     .withColumn("contains", mos.st_contains(F.col("geom1"), F.col("geom3")))
     .withColumn("intersects", mos.st_intersects(F.col("geom1"), F.col("geom2")))
     .withColumn("valid", mos.st_isvalid(F.col("geom1")))
 )
 
 # inspect the results; what did you expect to see?
-display(df_attrs)
+display(df_predicates)
 
 # COMMAND ----------
 
@@ -138,18 +138,66 @@ display(df_attrs)
 # MAGIC - ST_DIFFERENCE, the difference between two polygons (Find the part of polygon `A` that is not contained in polygon `B`)
 # MAGIC - ST_INTERSECTION, intersection between two polygons (Find the part of polygon `A` that is also part of polygon `B`)
 # MAGIC - ST_UNION, the union of two polygons (The polygon whose interior is either in polygon `A` or polygon `B`)
+# MAGIC 
+# MAGIC ![venn diagram](https://tdikland.github.io/geospatial-dataengineering-with-databricks/resources/module2/venn-diagram.png)
+# MAGIC 
+# MAGIC _A Venn diagram showing the possible relations between two sets. Can you find the difference, intersection and union?_
 
 # COMMAND ----------
 
-wkt1 = "LINESTRING (-1 -1, 1 1)"
-wkt2 = "LINESTRING (-1 0, 1 0)"
+wkt1 = "POLYGON ((0 0, 0 2, 2 2, 2 0, 0 0))"
+wkt2 = "LINESTRING (1 1, 1 3, 3 3, 3 1, 1 1)"
 
-df_left = spark.createDataFrame([(1, wkt1)], "id INT, wkt STRING").withColumn("geom_left", mos.st_geomfromwkt(F.col("wkt")))
-df_right = spark.createDataFrame([(1, wkt2)], "id INT, wkt STRING").withColumn("geom_right", mos.st_geomfromwkt(F.col("wkt")))
+schema = "geom1_wkt STRING, geom2_wkt STRING, geom3_wkt STRING"
+df = spark.createDataFrame([{"geom1_wkt": wkt1, "geom2_wkt": wkt2}], schema)
+df_geom = (df
+    .withColumn("geom1", mos.st_geomfromwkt(F.col("geom1_wkt")))
+    .withColumn("geom2", mos.st_geomfromwkt(F.col("geom2_wkt")))
+    .select("geom1", "geom2")
+)
 
-df_res = df_left.join(df_right, "id").withColumn("crosses", mos.st_intersects(F.col("geom_left"), F.col("geom_right")))
-display(df_res)
+# apply the functions to the square geometry
+df_relations = (df_geom
+    .withColumn("difference", mos.st_difference(F.col("geom1"), F.col("geom2")))
+    .withColumn("intersection", mos.st_intersection(F.col("geom1"), F.col("geom2")))
+    .withColumn("union", mos.st_union(F.col("geom1"), F.col("geom2")))
+)
+
+# inspect the results; what did you expect to see?
+display(df_relations)
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC ## Aggregating geometries
+# MAGIC 
+# MAGIC These relations can also be used as aggregators. An example is using ST_UNION_AGG in a grouping query to find the union of all geometries belonging to the same group.
 
+# COMMAND ----------
+
+wkt1 = "POLYGON ((0 0, 0 1, 1 1, 1 0, 0 0))"
+wkt2 = "POLYGON ((0 1, 0 2, 1 2, 1 1, 0 1))"
+wkt3 = "POLYGON ((1 0, 1 1, 2 1, 2 0, 1 0))"
+
+schema = "id INT, geom_wkt STRING"
+df = spark.createDataFrame([(1, wkt1), (1, wkt2), (2, wkt3)], schema)
+df_geom = (df
+    .withColumn("geom", mos.st_geomfromwkt(F.col("geom_wkt")))
+    .select("id", "geom")
+)
+
+# Union geometries with the same id
+df_agg = df_geom.groupBy("id").agg(mos.st_union_agg(F.col("geom")).alias("union_agg"))
+
+# inspect the results; what did you expect to see?
+display(df_agg)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC WKB representations are not human readable. Let's use the `mosaic_kepler` magic to visualise the result
+
+# COMMAND ----------
+
+# MAGIC %%mosaic_kepler
+# MAGIC df_agg "union_agg" "geometry"
