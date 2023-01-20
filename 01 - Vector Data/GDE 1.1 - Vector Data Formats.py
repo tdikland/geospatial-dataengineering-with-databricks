@@ -32,25 +32,25 @@
 # MAGIC 
 # MAGIC The vector format represents the geospatial features on Earth as vectors of discrete geometric locations described by _coordinates_. These coordinates, also known as _vertices_, describe the shape of spatial object. The organization of the vertices determines the type of vector: _points_, _lines_ or _polygons_. Note that the vector format is always an approximation of the feature on earth, e.g. it is impossible to encode a circle using a finite amount of vertices.  Let's bring this definition to live using an example. We'll represent the Databricks HQ in San Fransisco using geospatial vectors. Starting off with an image from above.
 # MAGIC 
-# MAGIC ![real world geospatial features](files/geospatial/workshop/office_raw.png)
+# MAGIC ![real world geospatial features](https://tdikland.github.io/geospatial-dataengineering-with-databricks/resources/module1/office_raw.png)
 # MAGIC 
 # MAGIC _Databricks HQ seen from above (source: Google Earth)_
 # MAGIC 
 # MAGIC Assume we are interested in three spatial features in this image. The location of the office building, the road behind the office building and the bus stop in front of the building. Let's annotate them using a polygon, line and point respectively.
 # MAGIC 
-# MAGIC ![annotated geospatial features](files/geospatial/workshop/office_annotated.png)
+# MAGIC ![annotated geospatial features](https://tdikland.github.io/geospatial-dataengineering-with-databricks/resources/module1/office_annotated.png)
 # MAGIC 
 # MAGIC _Annotate the office, street and bus stop using polygons lines and points_
 # MAGIC 
 # MAGIC Next we need to overlay a coordinate system to express the annotated shapes in terms of coordinates. We chose a coordinate system with the origin in the bottom left of the image.
 # MAGIC 
-# MAGIC ![annotated features with coordinate system](files/geospatial/workshop/office_coords.png)
+# MAGIC ![annotated features with coordinate system](https://tdikland.github.io/geospatial-dataengineering-with-databricks/resources/module1/office_coords.png)
 # MAGIC 
 # MAGIC _Coordinate system overlay with origin in bottom left corner_
 # MAGIC 
 # MAGIC Finally we can forget about the original image and only keep the vectors representing the spatial objects of interest.
 # MAGIC 
-# MAGIC ![fully vectorized data](files/geospatial/workshop/office_vector.png)
+# MAGIC ![fully vectorized data](https://tdikland.github.io/geospatial-dataengineering-with-databricks/resources/module1/office_vector.png)
 # MAGIC 
 # MAGIC _Geospatial features in vector format_
 # MAGIC 

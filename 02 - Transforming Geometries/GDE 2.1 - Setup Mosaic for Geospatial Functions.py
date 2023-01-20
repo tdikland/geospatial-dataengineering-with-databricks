@@ -2,7 +2,7 @@
 # MAGIC %md
 # MAGIC # Setup Mosaic for Geospatial Functions
 # MAGIC 
-# MAGIC The Mosaic is a databricks-labs project, that intends to simplify the implementation of scalable geospatial data pipelines by bounding together common Open Source geospatial libraries via Apache Spark, with a set of examples and best practices for common geospatial use cases. In this Notebook we'll cover how to setup Mosaic in Databricks.
+# MAGIC The Mosaic is a databricks-labs project, that intends to simplify the implementation of scalable geospatial data pipelines by bounding together common Open Source geospatial libraries via Apache Spark, with a set of examples and best practices for common geospatial use cases. In this Notebook we'll cover how to setup Mosaic in Databricks. In depth documentation can be found on the official [mosaic documentation website](https://databrickslabs.github.io/mosaic/index.html).
 # MAGIC 
 # MAGIC ## Learning goals
 # MAGIC After completing this notebook you should be able to:
