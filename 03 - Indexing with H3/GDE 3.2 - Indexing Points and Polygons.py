@@ -105,4 +105,63 @@ display(df_point_with_cell_id)
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC ### Polygon packing
+# MAGIC To _pack_ the polygon with cells we select all grid cells at the given resolution that are completely contained within the polygon. This gives us an _underestimation_ of the polygon in grid space. This may be useful when asking questions like "which points are _surely within_ a polygon". Note that choosing a resolution that is too high or an unfortunate location of the polygon can cause the packing to be empty (i.e. there exists no grid cell at a given resolution that is contained by the polygon)
+# MAGIC 
+# MAGIC ![Packing of Databricks HQ](https://tdikland.github.io/geospatial-dataengineering-with-databricks/resources/module3/packing.png)
+# MAGIC 
+# MAGIC _The packing of Databricks HQ at resolution 13_
 
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ### Polygon covering
+# MAGIC To _cover_ the polygon with cells we select all grid cells at the given resolution that intersect with the polygon. This gives us an _overestimation_ of the polygon in grid space. This may be useful when answering questions like "find all points that _may be contained_ by the polygon". Note that the covering of a polygon is never empty.
+# MAGIC 
+# MAGIC ![H3 covering of Databricks HQ](https://tdikland.github.io/geospatial-dataengineering-with-databricks/resources/module3/cover.png)
+# MAGIC 
+# MAGIC _The covering of Databricks HQ at resolution 13_
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ### Polygon polyfill
+# MAGIC To _polyfill_ the polygon with cells we select all grid cells at the given resolution whose center point is with the polygon. This gives us an _approximation_ of the polygon in grid space.
+# MAGIC 
+# MAGIC ![H3 polyfill of Databricks HQ](https://tdikland.github.io/geospatial-dataengineering-with-databricks/resources/module3/polyfill.png)
+# MAGIC 
+# MAGIC _The polyfill of Databricks HQ at resolution 13_
+# MAGIC 
+# MAGIC The polyfill strikes a balance between overestimating and underestimating the polygon. This is the method that is often used to approximate polygons the in H3 grid. Note that increasing the resolution yields better and better approximations of the polygon (why?), but that is traded off against the number of cells that make up said approximation. 
+# MAGIC 
+# MAGIC Another property of polyfill is that for multiple non-overlapping polygons, each H3 cell will only fall in one of the polygons. This avoid data duplications when querying segmentated datasets like countries.
+# MAGIC 
+# MAGIC The polyfill method is also included in the set of H3 geospatial functions. Let's inspect them more in depth.
+
+# COMMAND ----------
+
+# GeoJSON representation of the polygon describing the location Databricks HQ.
+resolution = 13
+hq_polygon = {
+    "type": "Polygon",
+    "coordinates": [
+        [
+            [-122.39373034022702, 37.79155217229324],
+            [-122.39404669586622, 37.791303346996045],
+            [-122.39377044164605, 37.79108855844848],
+            [-122.39346002695783, 37.79132916852886],
+            [-122.39373034022702, 37.79155217229324],
+        ]
+    ],
+}
+
+# create dataframe and polyfill the polygon
+schema = "geom_geojson STRING"
+df = spark.createDataFrame([{"geom_geojson": json.dumps(hq_polygon)}], schema)
+df_polyfilled = df.withColumn(
+    "polyfill", h3_polyfillash3(F.col("geom_geojson"), F.lit(resolution))
+)
+
+# does the result look like you expected? What would change if the resolution lowered?
+display(df_polyfilled)

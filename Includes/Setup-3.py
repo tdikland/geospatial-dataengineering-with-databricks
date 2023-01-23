@@ -8,3 +8,7 @@ import mosaic as mos
 from mosaic import enable_mosaic
 
 enable_mosaic(spark, dbutils)
+
+# COMMAND ----------
+
+import json
