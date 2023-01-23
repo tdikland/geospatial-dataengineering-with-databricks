@@ -12,3 +12,4 @@ enable_mosaic(spark, dbutils)
 # COMMAND ----------
 
 import json
+from pyspark.databricks.sql.functions import *
