@@ -7,6 +7,7 @@
 # MAGIC ## Learning Objectives
 # MAGIC By the end of this lab you should be able to
 # MAGIC - Execute a spatial join using the "classical" geometric approach
+# MAGIC - Create spatial aggregates
 
 # COMMAND ----------
 
