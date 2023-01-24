@@ -13,7 +13,7 @@
 # MAGIC ## Grid distances
 # MAGIC We have seen how basic geometries can be mapped to the H3 grid system. One of the properties of the H3 grid system is that the centers of all neighbouring cells lie at the same distance. 
 # MAGIC 
-# MAGIC ![Equidistant neighbour cells](files/geospatial/workshop/neighbours.png)
+# MAGIC ![Equidistant neighbour cells](https://tdikland.github.io/geospatial-dataengineering-with-databricks/resources/module3/neighbours.png)
 # MAGIC 
 # MAGIC _For a hexagonal grid all neighour cells are equidistant. In square grids there are two possible distances to a neighbour cell and in a triangular grid even three._
 # MAGIC 
@@ -39,8 +39,8 @@ display(df)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ![Databricks HQ - 1ring](files/geospatial/workshop/1ring.png)
-# MAGIC ![Databricks HQ - 2ring](files/geospatial/workshop/2ring.png)
-# MAGIC ![Databricks HQ - 3ring](files/geospatial/workshop/3ring.png)
+# MAGIC ![Databricks HQ - 1ring](https://tdikland.github.io/geospatial-dataengineering-with-databricks/resources/module3/1ring.png)
+# MAGIC ![Databricks HQ - 2ring](https://tdikland.github.io/geospatial-dataengineering-with-databricks/resources/module3/2ring.png)
+# MAGIC ![Databricks HQ - 3ring](https://tdikland.github.io/geospatial-dataengineering-with-databricks/resources/module3/3ring.png)
 # MAGIC 
 # MAGIC _kRings around Databricks HQ with k=1,2,3_
