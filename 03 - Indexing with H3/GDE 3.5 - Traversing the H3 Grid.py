@@ -9,6 +9,7 @@
 # MAGIC - Find parent cell for a cell at a given resolution
 # MAGIC - Find child cells for a cell at a given resolution
 # MAGIC - Understand the H3 grid structure and how it helps 
+# MAGIC - Compacting and uncompacting sets of H3 grid cells
 
 # COMMAND ----------
 
@@ -234,5 +235,20 @@ display(df_traversed)
 
 # COMMAND ----------
 
+# 3262 cells in uncompacted polyfill
+uncompact_cell_count = len(df_traversed.first().polyfill) 
+
+# compacted has only 850 cells in total, approximately 4x less
+df_c = df_traversed.withColumn("resolution_c", h3_resolution("compact_cells")).groupBy("resolution_c").count()
+
+# See distrubution
+display(df_c)
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC It is always possible to revert back to the origional geometry using `h3_uncompact`.
+
+# COMMAND ----------
+
+
