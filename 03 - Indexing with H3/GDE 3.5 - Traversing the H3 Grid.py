@@ -247,8 +247,4 @@ display(df_c)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC It is always possible to revert back to the origional geometry using `h3_uncompact`.
-
-# COMMAND ----------
-
-
+# MAGIC It is always possible to revert back to the origional geometry using `h3_uncompact` (lossless!). 

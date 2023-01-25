@@ -27,7 +27,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC configure mosaic to use `JTS` and `H3` as geometry api and index system
+# MAGIC configure mosaic to use `ESRI` and `H3` as geometry api and index system
 
 # COMMAND ----------
 
