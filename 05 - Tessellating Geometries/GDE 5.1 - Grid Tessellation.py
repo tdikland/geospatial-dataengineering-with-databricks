@@ -16,3 +16,14 @@
 # COMMAND ----------
 
 # MAGIC %run ../Includes/Setup-4
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## A hybrid approach to indexing
+# MAGIC 
+# MAGIC In the previous module the H3 DGGS was used to approximate polygons using the `polyfill` operation. The advantage of that approximation is the speedup in processing speed (not uncommon to see x100 speedup on larger datasets). However, an approximation is not okay if precision in the geometries is critical for the use case. Tessellation is a hybrid approach that has the same accuracy as the classical geometric approach, but uses a global grid system to ensure scalability.
+# MAGIC 
+# MAGIC The idea behind the tessellation approach is as follows:
+# MAGIC - Find a coverage of h3 cells for all polygons. Mark each cell as a `core` cell (completely contained within original polygon) or a boundary cell (intersecting original polygon)
+# MAGIC - To check if a point is contained by a polygon, we first check if the point grid cell is part of the core cells (SMJ/HMJ) and then apply the containment filter on the boundary only.
