@@ -79,6 +79,20 @@ display(df)
 
 # COMMAND ----------
 
+# MAGIC %md 
+# MAGIC ### Mosaic internal geomtry format
+# MAGIC The dataframe constructed in the cell above contains a `geom` column with a somewhat misterious structure. This structure contains the fields `type_id`, `srid`, `boundary` and `holes`. Normally you would not interact with these fields directly, but use mosaic to interpret and transform your geometries. For completeness sake, here is a brief explaination of these fields:
+# MAGIC 
+# MAGIC **type_id:** The `type_id` field is used to encode what kind of spatial feature we're dealing with. For example a point has `type_id=1`, while a polygon has `type_id=5`.
+# MAGIC 
+# MAGIC **srid:** The `srid` field is used to keep track of the spatial reference identifier. This indetifier describes how the coordinates of the geometry must be mapped to the Earth's surface.
+# MAGIC 
+# MAGIC **boundary:** The `boundary` denotes the points that describe the outer ring of the geometry. If this information is combined with the `type_id`, the original geometry can be reconstructed (e.g. for a linestring the outer ring is connected into a string, for a polygon it is made into a ring that defines the outer boundary of a polygon). 
+# MAGIC 
+# MAGIC **holes:** Finally, the `holes` (which are only relevant for polygons and its derivatives) describe which polygons should be "cut out" of the polygon defined by the outer ring. Think about a donut, which could be described as a larger disk, with a disk shaped hole. This is also the reason that the WKT notation of a polygon has double parenthesis. The first ring describes the outer ring, and the subsequent rings describe the holes. For example: ```POLYGON ((-2 -2, -2 2, 2 2, 2 -2, -2 -2), (-1 -1, -1 1, 1 1, 1 -1, -1 -1))```
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC ## WKB (well-known binary representation of geometry)
 # MAGIC 

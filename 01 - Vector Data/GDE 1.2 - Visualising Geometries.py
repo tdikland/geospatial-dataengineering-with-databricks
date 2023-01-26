@@ -43,6 +43,13 @@
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC ### Visualising Databricks HQ
+# MAGIC 
+# MAGIC In the previous notebook Databricks HQ together with some roads and a bus stop were modeled in vector format. Now the visual representation of these vectors will be plotted on a map.
+
+# COMMAND ----------
+
 # Create some geometries to visualise
 databricks_hq_geojson = '{"type": "Polygon", "coordinates": [[[-122.39343385977625, 37.79132004377702], [-122.39370019061133, 37.791537245784454], [-122.39400700373288, 37.79128973646942], [-122.39373641160483, 37.79107926871191], [-122.39343385977625, 37.79132004377702]]]}'
 san_fransisco_road = '{"coordinates": [[-122.39492103462949, 37.79181899994789], [-122.39340774317989, 37.790613052399536], [-122.39251569769378, 37.791302887017565], [-122.3940767772944, 37.79254658717453]], "type": "LineString"}'
@@ -57,3 +64,23 @@ df_viz = df.withColumn("geom", mos.st_geomfromgeojson(F.col("geom_geojson")))
 
 # MAGIC %%mosaic_kepler
 # MAGIC df_viz "geom" "geometry" 3
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ### Polygons with holes
+# MAGIC 
+# MAGIC Let's also visualise some slightly more complex vectors. For instance a polygon with a hole!
+
+# COMMAND ----------
+
+# Create a polygon with a hole
+polygon_with_hole = "POLYGON ((-2 -2, -2 2, 2 2, 2 -2, -2 -2), (-1 -1, -1 1, 1 1, 1 -1, -1 -1))"
+
+df = spark.createDataFrame([(polygon_with_hole,)], "geom_wkt STRING")
+df_viz = df.withColumn("geom", mos.st_geomfromwkt(F.col("geom_wkt")))
+
+# COMMAND ----------
+
+# MAGIC %%mosaic_kepler
+# MAGIC df_viz "geom" "geometry"
