@@ -4,7 +4,7 @@ def is_runtime_supported():
 
 # COMMAND ----------
 
-# MAGIC %pip install databricks-mosaic
+# MAGIC %pip install databricks-mosaic==0.3.5
 
 # COMMAND ----------
 
