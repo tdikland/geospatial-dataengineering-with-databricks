@@ -26,4 +26,10 @@
 # MAGIC 
 # MAGIC The idea behind the tessellation approach is as follows:
 # MAGIC - Find a coverage of h3 cells for all polygons. Mark each cell as a `core` cell (completely contained within original polygon) or a boundary cell (intersecting original polygon)
-# MAGIC - To check if a point is contained by a polygon, we first check if the point grid cell is part of the core cells (SMJ/HMJ) and then apply the containment filter on the boundary only.
+# MAGIC - Store the intersection of the original geometry and the grid cell for each cell in the polygon cover
+# MAGIC 
+# MAGIC What results after the _tessellation_ of a polygon is a set of _chips_. Let's tessellate a polygon with mosaic and inspect these chips in more detail.
+
+# COMMAND ----------
+
+
