@@ -1,5 +1,5 @@
 # Databricks notebook source
-# MAGIC %pip install databricks-mosaic
+# MAGIC %pip install databricks-mosaic==0.3.5
 
 # COMMAND ----------
 
