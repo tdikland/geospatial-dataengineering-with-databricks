@@ -53,11 +53,15 @@
 # MAGIC %md
 # MAGIC ### S2
 # MAGIC 
+# MAGIC The S2 DGGS uses rectangular cells with a cube face centered quadratic transform.
+# MAGIC 
 # MAGIC ![S2](https://tdikland.github.io/geospatial-dataengineering-with-databricks/resources/module3/s2.gif)
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC ### Geohash
+# MAGIC 
+# MAGIC The Geohash DGGS also uses rectangular cells, and works with longitudes and latitudes.
 # MAGIC 
 # MAGIC ![geohash](https://tdikland.github.io/geospatial-dataengineering-with-databricks/resources/module3/geohash.jpeg)
