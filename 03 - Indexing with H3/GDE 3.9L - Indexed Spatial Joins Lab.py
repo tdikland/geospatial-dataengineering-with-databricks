@@ -93,12 +93,13 @@ fields = [
 
 # COMMAND ----------
 
-# SOLUTION
+# TODO
 df_fields_raw = spark.createDataFrame(fields, "field_id STRING, geom_geojson STRING")
 df_tractors_raw = spark.createDataFrame(tractor_positions, "tractor_id STRING, timestamp STRING, longitude DOUBLE, latitude DOUBLE")
 
-df_fields_polyfilled = df_fields_raw.withColumn("polyfilled_idx", F.explode(h3_polyfillash3("geom_geojson", F.lit(11))))
-df_tractors_indexed = df_tractors_raw.withColumn("point_idx", h3_longlatash3("longitude", "latitude", F.lit(11)))
+# HINT: use the explode function to put every cell of the polyfill in a seperate row
+df_fields_polyfilled = df_fields_raw.withColumn("polyfilled_idx", ...)
+df_tractors_indexed = df_tractors_raw.withColumn("point_idx", ...)
 
 display(df_fields_polyfilled)
 
@@ -126,13 +127,9 @@ display(df_fields_polyfilled)
 
 # COMMAND ----------
 
-# SOLUTION
+# TODO
 df_tractors_per_field = (
-    df_fields_polyfilled
-    .join(df_tractors_indexed, df_fields_polyfilled.polyfilled_idx == df_tractors_indexed.point_idx)
-    .groupBy("field_id")
-    .agg(F.collect_set("tractor_id").alias("tractor_ids"))
-    .orderBy("field_id")
+    ...
 )
 
 display(df_tractors_per_field)
@@ -146,8 +143,8 @@ display(df_tractors_per_field)
 
 # COMMAND ----------
 
-# SOLUTION
-df_fields_compact = df_fields_raw.withColumn("compact_idx", F.explode(h3_compact(h3_polyfillash3("geom_geojson", F.lit(11)))))
+# TODO
+df_fields_compact = df_fields_raw.withColumn("compact_idx", ...)
 
 # COMMAND ----------
 
@@ -166,18 +163,9 @@ df_fields_compact = df_fields_raw.withColumn("compact_idx", F.explode(h3_compact
 
 # COMMAND ----------
 
-# SOLUTION
-same_res_8_parent = h3_toparent(df_tractors_indexed.point_idx, F.lit(8)) == h3_toparent(df_fields_compact.compact_idx, F.lit(8))
-is_res_8_field = h3_resolution(df_fields_compact.compact_idx) == F.lit(8)
-tractor_is_child_of_field = h3_ischildof(df_tractors_indexed.point_idx, df_fields_compact.compact_idx)
-
+# TODO
 df_fields_per_tractor = (
-    df_fields_compact
-    .crossJoin(df_tractors_indexed)
-    .where(same_res_8_parent & (is_res_8_field | tractor_is_child_of_field))
-    .groupBy("tractor_id")
-    .agg(F.collect_set("field_id").alias("field_ids"))
-    .orderBy("tractor_id")
+    ...
 )
 
 display(df_fields_per_tractor)
@@ -189,5 +177,5 @@ display(df_fields_per_tractor)
 
 # COMMAND ----------
 
-# SOLUTION
-# Sort Merge Join
+# TODO
+# ???
