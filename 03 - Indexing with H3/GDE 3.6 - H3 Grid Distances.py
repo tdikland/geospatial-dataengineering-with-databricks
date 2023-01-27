@@ -97,7 +97,22 @@ df = (
     .withColumn("1ring", h3_kring(F.col("cell_id"), F.lit(1)))
     .withColumn("2ring", h3_kring(F.col("cell_id"), F.lit(2)))
     .withColumn("3ring", h3_kring(F.col("cell_id"), F.lit(3)))
+    .withColumn("4hexring", h3_hexring(F.col("cell_id"), F.lit(4)))
 )
 
 # How many hexagons do you expect in each column?
 display(df)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC Let's visualise the 4-hexring
+
+# COMMAND ----------
+
+df_viz = df.withColumn("ring_idx", F.explode(F.col("4hexring")))
+
+# COMMAND ----------
+
+# MAGIC %%mosaic_kepler
+# MAGIC df_viz "ring_idx" "h3"

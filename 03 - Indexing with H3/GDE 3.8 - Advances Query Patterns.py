@@ -177,17 +177,17 @@ df_offices_hierarchy = (
 )
 
 # Assume the neighborhood is indexed in resolution 12.
-df_neighborhood_single_res = df_neighborhood.withColumn(
+df_neighborhood_hierarchy = df_neighborhood.withColumn(
     "neighborhood_cell_id",
     F.explode(h3_polyfillash3("geom_geojson", F.lit(12))),
 )
 
-df_pip_hierarchy = df_neighborhood_single_res.join(
+df_pip_hierarchy = df_neighborhood_hierarchy.join(
     df_offices_hierarchy,
     df_offices_hierarchy.office_cell_id_12
-    == df_neighborhood_single_res.neighborhood_cell_id,
+    == df_neighborhood_hierarchy.neighborhood_cell_id,
 ).where(
-    h3_toparent(df_neighborhood_single_res.neighborhood_cell_id, F.lit(10))
+    h3_toparent(df_neighborhood_hierarchy.neighborhood_cell_id, F.lit(10))
     == df_offices_hierarchy.office_cell_id_10
 )
 # In the where clause we do some additional filtering. 
@@ -205,9 +205,9 @@ display(df_pip_hierarchy)
 
 # COMMAND ----------
 
-# Assume the offices are indexed with resolution 9 and 12
+# Assume the offices are indexed with resolution 8 and 12
 df_offices_compact = df_offices.withColumn(
-    "office_cell_id_9", h3_pointash3("geom_wkt", F.lit(9))
+    "office_cell_id_8", h3_pointash3("geom_wkt", F.lit(8))
 ).withColumn("office_cell_id_12", h3_pointash3("geom_wkt", F.lit(12)))
 
 # Assume the neighborhood is indexed in resolution 12.
@@ -216,27 +216,25 @@ df_neighborhood_compact = df_neighborhood.withColumn(
     F.explode(h3_compact(h3_polyfillash3("geom_geojson", F.lit(12)))),
 )
 
-df_pip_compact = df_neighborhood_compact.crossJoin(
-    df_offices_compact,
-).where(
-    (
-        (
-            h3_toparent(df_neighborhood_compact.neighborhood_compact_cell_id, F.lit(9))
-            == df_offices_compact.office_cell_id_9
-        )
-        & (h3_resolution(df_neighborhood_compact.neighborhood_compact_cell_id) == 9)
-    ) | (
-        (
-            h3_toparent(df_neighborhood_compact.neighborhood_compact_cell_id, F.lit(9))
-            == df_offices_compact.office_cell_id_9
-        )
-        & (
-            h3_ischildof(
-                df_offices_compact.office_cell_id_12,
-                df_neighborhood_compact.neighborhood_compact_cell_id,
-            )
-        )
-    )
-)  # Check for high resolution
+low_resolution_overlap = h3_toparent(df_neighborhood_compact.neighborhood_compact_cell_id, F.lit(8)) == df_offices_compact.office_cell_id_8
+is_low_resolution = h3_resolution(df_neighborhood_compact.neighborhood_compact_cell_id) == 8
+is_child = h3_ischildof(df_offices_compact.office_cell_id_12, df_neighborhood_compact.neighborhood_compact_cell_id)
+
+df_pip_compact = df_neighborhood_compact.crossJoin(df_offices_compact).where(low_resolution_overlap & (is_low_resolution | is_child))
 
 display(df_pip_compact)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## What is the performance of indexed spatial joins?
+# MAGIC 
+# MAGIC In module 2, the complexity of the "classical" spatial join was discussed. There it was stated that -because we have to run `ST_CONTAINS` on all polygon-point combinations- that spark will plan this query as a cartesian join, which is very expensive in terms of processing latency.
+# MAGIC 
+# MAGIC The indexed spatial joins that were discussed in this module are so called _equi-joins_ (joins with an "=" predicate), for which spark has better joining strategies. These strategies are for instance broadcast hash join (BHJ), shuffle hash join (SHJ) and sort merge join (SMJ) where the latter two are often used in joins of large datasets. Indexed spatial joins can be planned using these strategies (why?). These joins scale like `O(N LOG(N))` where `N` denotes the amount of points/polygons. This makes a massive difference at scale, as the table below indicates.
+# MAGIC 
+# MAGIC | N | N * LOG(N) | N * N |
+# MAGIC | --- | --- | --- |
+# MAGIC | 10 | 33 | 100 |
+# MAGIC | 100 | 664 | 10000 |
+# MAGIC | 1000 | 9966 | 1000000 |
