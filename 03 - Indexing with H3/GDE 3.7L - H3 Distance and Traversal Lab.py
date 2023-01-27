@@ -52,9 +52,30 @@
 
 # COMMAND ----------
 
+lat_lon_row = [
+    ("BP", -0.090005621, 0.005748641, 2.21),
+    ("Mobil", 0.129706366, 0.431238479, 1.88)
+]
+df_lat_lon = spark.createDataFrame(lat_lon_row, "brand STRING, lat DOUBLE, lon DOUBLE, price DOUBLE")
+
+hex_idx_rows = [
+    ("Gulf", "8d754e09804003f", 1.89),
+    ("Texaco", "8d754ebaa94003f", 1.42)
+]
+df_hex = spark.createDataFrame(hex_idx_rows, "brand STRING, cell_idx STRING, price DOUBLE")
+
+long_idx_rows = [
+    ("Chevron", 619056576374505471, 2.05),
+    ("Exxon", 637070976607846463, 1.94),
+    ("Shell", 619056840577908735, 1.71)
+]
+df_long = spark.createDataFrame(long_idx_rows, "brand STRING, cell_idx LONG, price DOUBLE")
+
 # TODO
-df_gas_station = sprak.createDataFrame(..., "brand STRING, gas_cell_id LONG, price DOUBLE")
+df_gas_station = ...
 df_home = spark.createDataFrame([(619056821840379903,)], "home_cell_id LONG")
+
+display(df_gas_station)
 
 # COMMAND ----------
 

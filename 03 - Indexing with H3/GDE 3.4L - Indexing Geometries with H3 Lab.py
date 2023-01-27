@@ -34,7 +34,7 @@ latitude = ... # TODO
 
 schema = "long DOUBLE, lat DOUBLE"
 df_point = spark.createDataFrame([{"long": longitude, "lat": latitude}], schema)
-df_resolutions = spark.range(16)
+df_resolutions = spark.range(16).withColumnRenamed("id", "resolution")
 
 df_h3_cell = df_point.crossJoin(df_resolutions).withColumn("cell_id", ...).orderBy(F.col("resolution")) # TODO
 
@@ -66,6 +66,8 @@ hq_polygon = ... #TODO
 
 schema = "geom_geojson STRING"
 df = spark.createDataFrame([{"geom_geojson": json.dumps(hq_polygon)}], schema)
+
+# HINT: use the explode function to put every grid cell in a seperate row in the resulting dataframe
 df_polyfilled = df.withColumn("polyfill", ...) #TODO
 
 display(df_polyfilled)

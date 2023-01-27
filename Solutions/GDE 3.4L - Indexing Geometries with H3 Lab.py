@@ -28,15 +28,20 @@
 
 # COMMAND ----------
 
-# represent your current location as a point
-longitude = ... # TODO
-latitude = ... # TODO
+# SOLUTION
+# Leiden, The Netherlands
+longitude = 4.505955
+latitude = 52.159022
 
 schema = "long DOUBLE, lat DOUBLE"
 df_point = spark.createDataFrame([{"long": longitude, "lat": latitude}], schema)
-df_resolutions = spark.range(16)
+df_resolutions = spark.range(16).withColumnRenamed("id", "resolution")
 
-df_h3_cell = df_point.crossJoin(df_resolutions).withColumn("cell_id", ...).orderBy(F.col("resolution")) # TODO
+df_h3_cell = (
+    df_point.crossJoin(df_resolutions)
+    .withColumn("cell_id", h3_longlatash3("long", "lat", df_resolutions.resolution))
+    .orderBy(F.col("resolution"))
+)
 
 # calculate the h3 cell in bigint and string. Does something stand out?
 display(df_h3_cell)
@@ -48,7 +53,8 @@ display(df_h3_cell)
 
 # COMMAND ----------
 
-# MAGIC %%mosaic_kepler #TODO
+# MAGIC %%mosaic_kepler
+# MAGIC df_h3_cell "cell_id" "h3"
 
 # COMMAND ----------
 
@@ -59,14 +65,14 @@ display(df_h3_cell)
 
 # COMMAND ----------
 
-# TODO
-resolution = ... #TODO
-hq_polygon = ... #TODO
+# SOLUTION
+resolution = 12
+hq_polygon = "POLYGON ((4.888677027629569 52.33591764757733,4.888677027629569 52.335759226198405,4.889275339651931 52.335759226198405,4.889275339651931 52.33591764757733,4.888677027629569 52.33591764757733))"
 
 
-schema = "geom_geojson STRING"
-df = spark.createDataFrame([{"geom_geojson": json.dumps(hq_polygon)}], schema)
-df_polyfilled = df.withColumn("polyfill", ...) #TODO
+schema = "geom_wkt STRING"
+df = spark.createDataFrame([{"geom_wkt": hq_polygon}], schema)
+df_polyfilled = df.withColumn("polyfill", F.explode(h3_polyfillash3("geom_wkt", F.lit(resolution))))
 
 display(df_polyfilled)
 
@@ -77,4 +83,5 @@ display(df_polyfilled)
 
 # COMMAND ----------
 
-# MAGIC %%mosaic_kepler #TODO
+# MAGIC %%mosaic_kepler
+# MAGIC df_polyfilled "polyfill" "h3"

@@ -52,9 +52,34 @@
 
 # COMMAND ----------
 
-# TODO
-df_gas_station = sprak.createDataFrame(..., "brand STRING, gas_cell_id LONG, price DOUBLE")
+# SOLUTION
+lat_lon_row = [
+    ("BP", -0.090005621, 0.005748641, 2.21),
+    ("Mobil", 0.129706366, 0.431238479, 1.88)
+]
+df_lat_lon = spark.createDataFrame(lat_lon_row, "brand STRING, lat DOUBLE, lon DOUBLE, price DOUBLE")
+
+hex_idx_rows = [
+    ("Gulf", "8d754e09804003f", 1.89),
+    ("Texaco", "8d754ebaa94003f", 1.42)
+]
+df_hex = spark.createDataFrame(hex_idx_rows, "brand STRING, cell_idx STRING, price DOUBLE")
+
+long_idx_rows = [
+    ("Chevron", 619056576374505471, 2.05),
+    ("Exxon", 637070976607846463, 1.94),
+    ("Shell", 619056840577908735, 1.71)
+]
+df_long = spark.createDataFrame(long_idx_rows, "brand STRING, cell_idx LONG, price DOUBLE")
+
+df_1 = df_lat_lon.withColumn("gas_cell_id", h3_longlatash3("lon", "lat", F.lit(9))).select("brand", "gas_cell_id", "price")
+df_2 = df_hex.withColumn("gas_cell_id", h3_toparent(h3_stringtoh3("cell_idx"), F.lit(9))).select("brand", "gas_cell_id", "price")
+df_3 = df_long.withColumn("gas_cell_id", h3_toparent("cell_idx", F.lit(9))).select("brand", "gas_cell_id", "price")
+
+df_gas_station = df_1.unionByName(df_2).unionByName(df_3)
 df_home = spark.createDataFrame([(619056821840379903,)], "home_cell_id LONG")
+
+display(df_gas_station)
 
 # COMMAND ----------
 
@@ -63,7 +88,8 @@ df_home = spark.createDataFrame([(619056821840379903,)], "home_cell_id LONG")
 
 # COMMAND ----------
 
-# TODO
+# MAGIC %%mosaic_kepler
+# MAGIC df_gas_station "gas_cell_id" "h3"
 
 # COMMAND ----------
 
@@ -72,7 +98,14 @@ df_home = spark.createDataFrame([(619056821840379903,)], "home_cell_id LONG")
 
 # COMMAND ----------
 
-# TODO
+# SOLUTION
+
+max_radius = 50 * 4
+
+df_home_reach = df_home.withColumn("reach", F.explode(h3_kring("home_cell_id", F.lit(max_radius))))
+df_reachable_gas_stations = df_home_reach.join(df_gas_station, df_home_reach.reach == df_gas_station.gas_cell_id)
+
+display(df_reachable_gas_stations)
 
 # COMMAND ----------
 
@@ -81,13 +114,61 @@ df_home = spark.createDataFrame([(619056821840379903,)], "home_cell_id LONG")
 
 # COMMAND ----------
 
-# TODO
+# SOLUTION
+df_gas_trip = (
+    df_reachable_gas_stations.withColumn(
+        "trip_fuel_use", h3_distance("home_cell_id", "gas_cell_id") / 50
+    )
+    .withColumn("fuel_cost", F.col("price") * (60 - 4 + F.col("trip_fuel_use")))
+    .withColumn("final_fuel", 60 - F.col("trip_fuel_use"))
+)
+
+display(df_gas_trip.select("brand", "fuel_cost", "final_fuel").orderBy("fuel_cost"))
 
 # COMMAND ----------
 
 # MAGIC %md 
-# MAGIC We could also do a two stop trip, getting a bit of expensive fuel to reach a previously out-of-range gas station. What is the best we can do using this strategy? 
+# MAGIC **CHALLENGE** 
+# MAGIC 
+# MAGIC Assume we could also do a two stop trip, getting a bit of expensive fuel to reach a previously out-of-range gas station. What is the best we can do using this strategy? 
 
 # COMMAND ----------
 
-# TODO
+# SOLUTION
+fuel_initial = 4
+fuel_consumption = 50
+fuel_tank = 60
+
+df_two_stops = (
+    df_home.crossJoin(df_gas_station.alias("stop1"))
+    .crossJoin(df_gas_station.alias("stop2"))
+    .withColumn(
+        "distance1", h3_distance(F.col("home_cell_id"), F.col("stop1.gas_cell_id"))
+    )
+    .withColumn(
+        "distance2", h3_distance(F.col("stop1.gas_cell_id"), F.col("stop2.gas_cell_id"))
+    )
+    .withColumn(
+        "distance3", h3_distance(F.col("stop2.gas_cell_id"), F.col("home_cell_id"))
+    )
+    .filter(F.col("distance1") <= fuel_initial * fuel_consumption)
+    .filter(F.col("distance1") + F.col("distance2") > fuel_initial * fuel_consumption)
+    .withColumn(
+        "cost1",
+        (F.col("distance1") + F.col("distance2") - fuel_initial * fuel_consumption)
+        * (F.col("stop1.price") / fuel_consumption),
+    )
+    .withColumn("cost2", fuel_tank * F.col("stop2.price"))
+    .withColumn("fuel_left", fuel_tank - (F.col("distance3") / fuel_consumption))
+    .withColumn("cost_total", F.col("cost1") + F.col("cost2"))
+)
+
+df_solution = df_two_stops.withColumn(
+    "route", F.concat(F.col("stop1.brand"), F.lit("->"), F.col("stop2.brand"))
+).select("route", "cost_total", "fuel_left").orderBy("cost_total")
+
+display(df_solution)
+
+# COMMAND ----------
+
+
