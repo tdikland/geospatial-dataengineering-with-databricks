@@ -108,7 +108,7 @@ df_tractors_raw = spark.createDataFrame(tractor_positions, tractors_schema)
 
 # Extract geometry. 
 df_fields = df_fields_raw.withColumn("field_geom", mos.st_geomfromgeojson("geom_geojson")) #SOLUTION
-df_tractors = df_tractors_raw.withColumn("tractor_geom", mos.st_point("latitude", "longitude")).withColumn("ts", F.to_timestamp("timestamp")) #SOLUTION
+df_tractors = df_tractors_raw.withColumn("tractor_geom", mos.st_setsrid(mos.st_point("latitude", "longitude"), F.lit(4326))).withColumn("ts", F.to_timestamp("timestamp")) #SOLUTION
 
 display(df_fields)
 display(df_tractors)
