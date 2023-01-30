@@ -192,5 +192,5 @@ df_tractors_in_field = df_fields_tessellated.join(
 df_upper = df_tractors_in_field.groupBy("tractor_id").agg(F.collect_set("field_id").alias("field_ids_upper")).orderBy("tractor_id")
 df_lower = df_tractors_in_field.filter(F.col("is_core")).groupBy("tractor_id").agg(F.collect_set("field_id").alias("field_ids_lower")).orderBy("tractor_id")
 
-df_final = df_upper.join(df_upper, "tractor_id")
+df_final = df_upper.join(df_lower, "tractor_id")
 display(df_final)

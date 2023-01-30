@@ -159,4 +159,33 @@ gold_tractors_in_fields.write.mode("overwrite").saveAsTable(
 
 # COMMAND ----------
 
-#TODO
+# MAGIC %sql
+# MAGIC SELECT
+# MAGIC   DISTINCT field_id AS `fields`
+# MAGIC FROM
+# MAGIC   geospatial_workshop_td.gold_tractors_in_fields
+# MAGIC WHERE
+# MAGIC   ts BETWEEN '2023-01-14 01:30:00'
+# MAGIC   AND '2023-01-14 02:30:00';
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT
+# MAGIC   DISTINCT field_id AS `fields`
+# MAGIC FROM
+# MAGIC   geospatial_workshop_td.gold_tractors_in_fields
+# MAGIC WHERE
+# MAGIC   tractor_id = '1';
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT
+# MAGIC   tractor_id,
+# MAGIC   field_id
+# MAGIC FROM
+# MAGIC   geospatial_workshop_td.gold_tractors_in_fields
+# MAGIC WHERE
+# MAGIC   tractor_id = '2'
+# MAGIC ORDER BY ts DESC
