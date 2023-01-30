@@ -22,10 +22,11 @@
 # MAGIC %md
 # MAGIC ## A hybrid approach to indexing
 # MAGIC 
-# MAGIC In the previous module the H3 DGGS was used to approximate polygons using the `polyfill` operation. The advantage of that approximation is the speedup in processing speed (not uncommon to see x100 speedup on larger datasets). However, an approximation is not okay if precision in the geometries is critical for the use case. Tessellation is a hybrid approach that has the same accuracy as the classical geometric approach, but uses a global grid system to ensure scalability.
+# MAGIC In the previous module the H3 DGGS was used to approximate polygons using the `polyfill` operation. The advantage of that approximation is the speedup in processing speed (not uncommon to see x100 speedup on larger datasets). However, an approximation is not okay if precision in the geometries is critical for the use case. Tessellation is a hybrid approach that has the same accuracy as the classical geometric approach, while using a global grid system for scalability.
 # MAGIC 
 # MAGIC The idea behind the tessellation approach is as follows:
-# MAGIC - Find a coverage of h3 cells for all polygons. Mark each cell as a `core` cell (completely contained within original polygon) or a `boundary` cell (intersecting original polygon)
+# MAGIC - Find a cover of grid cells for all polygons. 
+# MAGIC - Mark covering grid cells as either a `core` cell (completely contained within original polygon) or a `boundary` cell (intersecting original polygon)
 # MAGIC - Store the intersection of the original geometry and the grid cell for each cell in the polygon cover
 # MAGIC 
 # MAGIC What results after the _tessellation_ of a polygon is a set of _chips_. Let's tessellate a polygon with mosaic and inspect these chips in more detail.
@@ -81,7 +82,3 @@ df_decompose = df_tessellated.withColumn("core_chip", F.col("tessellated.is_core
 
 # check the ratio of core cells vs boundary cells
 display(df_decompose)
-
-# COMMAND ----------
-
-

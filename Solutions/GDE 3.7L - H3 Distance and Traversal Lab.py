@@ -168,7 +168,3 @@ df_solution = df_two_stops.withColumn(
 ).select("route", "cost_total", "fuel_left").orderBy("cost_total")
 
 display(df_solution)
-
-# COMMAND ----------
-
-

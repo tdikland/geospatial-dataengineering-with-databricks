@@ -180,6 +180,8 @@ df_fields_per_tractor = (
     .orderBy("tractor_id")
 )
 
+df_fields_per_tractor.explain()
+
 display(df_fields_per_tractor)
 
 # COMMAND ----------
