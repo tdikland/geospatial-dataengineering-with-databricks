@@ -8,3 +8,6 @@ import mosaic as mos
 from mosaic import enable_mosaic
 
 enable_mosaic(spark, dbutils)
+
+import json
+from pyspark.databricks.sql.functions import *
