@@ -29,6 +29,11 @@
 
 # COMMAND ----------
 
+my_schema = "geospatial_workshop_td"
+spark.sql(f"CREATE DATABASE IF NOT EXISTS {my_schema}")
+
+# COMMAND ----------
+
 # load the data from "raw" storage
 import csv
 with open("../resources/module5/fields.csv", "r") as fd:
@@ -39,7 +44,8 @@ with open("../resources/module5/fields.csv", "r") as fd:
 df_fields.display()
 
 # Create table geospatial_workshop_<your initials>.bronze_fields
-# TODO
+# SOLUTION
+df_fields.write.mode("overwrite").saveAsTable(f"{my_schema}.bronze_fields")
 
 # COMMAND ----------
 
@@ -51,7 +57,8 @@ with open("../resources/module5/tractor_positions.json") as fd:
 df_tractors.display()
 
 # Create table geospatial_workshop_<your initials>.bronze_tractors
-# TODO
+# SOLUTION
+df_tractors.write.mode("overwrite").saveAsTable(f"{my_schema}.bronze_tractors")
 
 # COMMAND ----------
 
@@ -65,7 +72,19 @@ df_tractors.display()
 
 # COMMAND ----------
 
-# TODO
+# SOLUTION
+
+silver_fields = (
+    spark.read.table(f"{my_schema}.bronze_fields")
+    .withColumn("geom", mos.st_geomfromgeojson("field_geometry"))
+    .withColumn("tessellated", mos.grid_tessellateexplode("geom", F.lit(9)))
+).select("field_id", "tessellated.*")
+
+silver_fields.write.mode("overwrite").saveAsTable(f"{my_schema}.silver_fields")
+
+# COMMAND ----------
+
+spark.sql(f"OPTIMIZE {my_schema}.silver_fields ZORDER BY index_id")
 
 # COMMAND ----------
 
@@ -77,7 +96,22 @@ df_tractors.display()
 
 # COMMAND ----------
 
-# TODO
+# SOLUTION
+silver_tractors = (
+    spark.read.table(f"{my_schema}.bronze_tractors")
+    .withColumn(
+        "tractor_geom",
+        mos.st_setsrid(mos.st_point("longitude", "latitude"), F.lit(4326)),
+    )
+    .withColumn("ts", F.to_timestamp("timestamp"))
+    .withColumn("cell_id", mos.grid_pointascellid("tractor_geom", F.lit(9)))
+).select("tractor_id", "cell_id", mos.st_aswkb("tractor_geom").alias("geom"), "ts")
+
+silver_tractors.write.mode("overwrite").saveAsTable(f"{my_schema}.silver_tractors")
+
+# COMMAND ----------
+
+spark.sql(f"OPTIMIZE {my_schema}.silver_tractors ZORDER BY cell_id, ts")
 
 # COMMAND ----------
 
@@ -94,7 +128,22 @@ df_tractors.display()
 
 # COMMAND ----------
 
-# TODO
+silver_fields = spark.read.table(f"{my_schema}.silver_fields")
+silver_tractors = spark.read.table(f"{my_schema}.silver_tractors")
+
+gold_tractors_in_fields = (
+    silver_tractors.join(
+        silver_fields, silver_fields.index_id == silver_tractors.cell_id
+    )
+    .filter(
+        silver_fields.is_core | mos.st_contains(silver_fields.wkb, silver_tractors.geom)
+    )
+    .select("field_id", "tractor_id", "ts")
+)
+
+gold_tractors_in_fields.write.mode("overwrite").saveAsTable(
+    f"{my_schema}.gold_tractors_in_fields"
+)
 
 # COMMAND ----------
 

@@ -29,6 +29,11 @@
 
 # COMMAND ----------
 
+my_schema = "geospatial_workshop_" + <your initials>  #!!TODO!!
+spark.sql(f"CREATE DATABASE IF NOT EXISTS {my_schema}")
+
+# COMMAND ----------
+
 # load the data from "raw" storage
 import csv
 with open("../resources/module5/fields.csv", "r") as fd:
@@ -37,6 +42,8 @@ with open("../resources/module5/fields.csv", "r") as fd:
     df_fields = spark.createDataFrame(data)
 
 df_fields.display()
+
+df_fields.write.mode("overwrite").saveAsTable(...) # TODO
 
 # Create table geospatial_workshop_<your initials>.bronze_fields
 # TODO
