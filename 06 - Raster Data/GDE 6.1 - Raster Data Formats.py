@@ -107,57 +107,5 @@ mos.enable_gdal(spark)
 # COMMAND ----------
 
 # sample tiff file
-df_raw = spark.read.format("binaryFile").load("dbfs:/FileStore/geospatial/samples/bogota.tif").drop("content")
+df_raw = spark.read.format("binaryFile").load("dbfs:/FileStore/geospatial/samples/bogota.tif")
 display(df_raw)
-
-# COMMAND ----------
-
-df_retiled = df_raw.withColumn("tiles", mos.rst_retile("path", F.lit(100), F.lit(100)))
-display(df_retiled)
-
-# COMMAND ----------
-
-df_indexed = (
-    df_retiled.repartition(20, F.col("tiles"))
-    .withColumn("grid_values", mos.rst_rastertogridavg(F.col("tiles"), F.lit(6)))
-    .select("grid_values", "path")
-)
-
-display(df_indexed)
-
-# COMMAND ----------
-
-from pyspark.databricks.sql.functions import *
-
-# COMMAND ----------
-
-import pyspark.sql.functions as F
-
-df_h3 = (
-    df_indexed
-    .withColumn("grid_values", F.explode("grid_values"))
-    .withColumn("grid_values", F.explode("grid_values"))
-    .withColumn("grid_cell_id", F.col("grid_values.cellID"))
-    .withColumn("grid_cell_avg_value", F.col("grid_values.measure"))
-    .select("grid_cell_id", "grid_cell_avg_value")
-)
-
-display(df_h3)
-
-# COMMAND ----------
-
-df_test = df_h3.withColumn("cell_string", h3_h3tostring("grid_cell_id")).withColumn("resolution", h3_resolution("cell_string"))
-display(df_test)
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
-# MAGIC %%mosaic_kepler
-# MAGIC df_test "cell_string" "h3" 1000
-
-# COMMAND ----------
-
-
