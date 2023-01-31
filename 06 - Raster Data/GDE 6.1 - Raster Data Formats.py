@@ -22,38 +22,142 @@
 
 # COMMAND ----------
 
-# MAGIC %md 
-# MAGIC ## Continuous rasters
+# MAGIC %md
+# MAGIC ## Examples of raster data
 # MAGIC 
-# MAGIC TODO
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ## Categorical rasters
+# MAGIC Some examples of continuous rasters include:
+# MAGIC - Precipitation maps.
+# MAGIC - Maps of tree height derived from LiDAR data.
+# MAGIC - Elevation values for a region.
 # MAGIC 
-# MAGIC TODO
+# MAGIC Some examples of classified maps include:
+# MAGIC - Landcover / land-use maps.
+# MAGIC - Tree height maps classified as short, medium, and tall trees.
+# MAGIC - Elevation maps classified as low, medium, and high elevation.
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Raster data (dis)advantages
 # MAGIC 
-# MAGIC Note: binning of continuous raster -> categorical
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ## Resolution
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ## Multi-band raster data
+# MAGIC Raster data has some important advantages:
+# MAGIC - representation of continuous surfaces
+# MAGIC - potentially very high levels of detail
+# MAGIC - data is ‘unweighted’ across its extent - the geometry doesn’t implicitly highlight features
+# MAGIC - cell-by-cell calculations can be very fast and efficient
 # MAGIC 
-# MAGIC (hyperspectal)
+# MAGIC The downsides of raster data are:
+# MAGIC - very large file sizes as cell size gets smaller
+# MAGIC - currently popular formats don’t embed metadata well
+# MAGIC - can be difficult to represent complex information
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## GeoTIFF raster format
+# MAGIC ## Reading GeoTIFF with rasterio
+
+# COMMAND ----------
+
+# MAGIC %pip install rasterio
+
+# COMMAND ----------
+
+import rasterio
+import rasterio.plot
+# import pyproj
+import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
+
+# COMMAND ----------
+
+print('Landsat on Google:')
+filepath = 'https://storage.googleapis.com/gcp-public-data-landsat/LC08/01/042/034/LC08_L1TP_042034_20170616_20170629_01_T1/LC08_L1TP_042034_20170616_20170629_01_T1_B4.TIF'
+with rasterio.open(filepath) as src:
+    print(src.profile)
+
+# COMMAND ----------
+
+# The grid of raster values can be accessed as a numpy array and plotted:
+with rasterio.open(filepath) as src:
+    thumbnail = src.read(1, out_shape=(1, int(src.height), int(src.width)))
+
+plt.imshow(thumbnail)
+plt.colorbar()
+plt.title("Overview - Band 4 {}".format(thumbnail.shape))
+plt.xlabel("Column #")
+plt.ylabel("Row #")
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## NetCDF raster format
+# MAGIC ## Reading GeoTIFF with mosaic
+
+# COMMAND ----------
+
+# MAGIC %pip install databricks-mosaic
+
+# COMMAND ----------
+
+import mosaic as mos
+from pyspark.sql import functions as F
+mos.enable_mosaic(spark, dbutils)
+mos.enable_gdal(spark)
+
+# COMMAND ----------
+
+# sample tiff file
+df_raw = spark.read.format("binaryFile").load("dbfs:/FileStore/geospatial/samples/bogota.tif").drop("content")
+display(df_raw)
+
+# COMMAND ----------
+
+df_retiled = df_raw.withColumn("tiles", mos.rst_retile("path", F.lit(100), F.lit(100)))
+display(df_retiled)
+
+# COMMAND ----------
+
+df_indexed = (
+    df_retiled.repartition(20, F.col("tiles"))
+    .withColumn("grid_values", mos.rst_rastertogridavg(F.col("tiles"), F.lit(6)))
+    .select("grid_values", "path")
+)
+
+display(df_indexed)
+
+# COMMAND ----------
+
+from pyspark.databricks.sql.functions import *
+
+# COMMAND ----------
+
+import pyspark.sql.functions as F
+
+df_h3 = (
+    df_indexed
+    .withColumn("grid_values", F.explode("grid_values"))
+    .withColumn("grid_values", F.explode("grid_values"))
+    .withColumn("grid_cell_id", F.col("grid_values.cellID"))
+    .withColumn("grid_cell_avg_value", F.col("grid_values.measure"))
+    .select("grid_cell_id", "grid_cell_avg_value")
+)
+
+display(df_h3)
+
+# COMMAND ----------
+
+df_test = df_h3.withColumn("cell_string", h3_h3tostring("grid_cell_id")).withColumn("resolution", h3_resolution("cell_string"))
+display(df_test)
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+# MAGIC %%mosaic_kepler
+# MAGIC df_test "cell_string" "h3" 1000
+
+# COMMAND ----------
+
+
